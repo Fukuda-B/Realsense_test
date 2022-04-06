@@ -39,7 +39,7 @@ class Realsense_test():
         start = time.time()
         frame_no = 1
         try:
-            while True:
+            for _ in [None]:
                 frames = pipeline.wait_for_frames()
                 color_frame = frames.get_color_frame()
                 ir_frame = frames.get_infrared_frame()
