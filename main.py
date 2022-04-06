@@ -1,8 +1,16 @@
-import pyrealsense2 as rs
-import numpy as np
+'''
+    Realsenseの動作テスト
+
+    録画: py main.py rec
+    再生: py main.py play
+'''
+
+import os
+import sys
 import cv2
 import time
-import os
+import numpy as np
+import pyrealsense2 as rs
 
 class Settings():
     def __init__(self):
@@ -77,4 +85,9 @@ def play(settings):
 
 if __name__ == "__main__":
     settings = Settings()
-    rec(settings)
+    option = sys.argv[1]
+
+    if str(option) == 'rec':
+        rec(settings)
+    else:
+        play(settings)
