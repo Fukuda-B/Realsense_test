@@ -7,8 +7,12 @@
 
     -----
 
-    Realsense D400-Series
-    https://www.mouser.com/pdfdocs/Intel_D400_Series_Datasheet.pdf
+    Realsense D400-Series, https://www.mouser.com/pdfdocs/Intel_D400_Series_Datasheet.pdf
+    librealsense example, 
+        https://dev.intelrealsense.com/docs/python2,
+        https://github.com/IntelRealSense/librealsense/blob/master/wrappers/python/examples/python-tutorial-1-depth.py,
+        https://github.com/IntelRealSense/librealsense/blob/master/wrappers/python/examples/opencv_viewer_example.py,
+
 '''
 
 import os
@@ -20,11 +24,12 @@ import pyrealsense2 as rs
 
 class Settings():
     def __init__(self):
-        self.V_SIZE = (640, 480) # 画面サイズ
-        self.FPS = 30 # フレームレート
+        self.V_SIZE = (640, 480)        # 画面サイズ
+        self.FPS = 30                   # フレームレート
+        self.HEATMAP = True             # ヒートマップ表示
+        self.F_NAME = 'realsense_b.bag' # ファイル名
 
         desktop = os.path.expanduser('~/Desktop')
-        self.F_NAME = 'realsense_b.bag'
         self.FULL_NAME = os.path.join(desktop, self.F_NAME)
 
 class Realsense_test():
@@ -73,6 +78,7 @@ class Realsense_test():
         self._pw(pipeline)
 
     def _pw(self, pipeline):
+        ''' フレームの表示 '''
         try:
             for _ in [None]:
                 frames = pipeline.wait_for_frames()
@@ -87,16 +93,34 @@ class Realsense_test():
                 color_image = np.asanyarray(color_frame.get_data())
 
                 cv2.namedWindow('ir_image', cv2.WINDOW_AUTOSIZE)
-                cv2.imshow('ir_image', ir_image)
+                cv2.imshow('ir_image', self._heat(ir_image))
                 cv2.namedWindow('color_image', cv2.WINDOW_AUTOSIZE)
                 cv2.imshow('color_image', color_image)
                 cv2.namedWindow('depth_image', cv2.WINDOW_AUTOSIZE)
-                cv2.imshow('depth_image', depth_image)
+                cv2.imshow('depth_image', self._heat(depth_image))
                 cv2.waitKey(1)
         except Exception as e:
             print(e)
         finally:
             pipeline.stop()
+
+    def _heat(self, np_img):
+        ''' ヒートマップに変換 '''
+        if not settings.heatmap: return
+        return cv2.applyColorMap(
+            cv2.convertScaleAbs(np_img, alpha=0.3),
+            cv2.COLORMAP_JET,
+        )
+        # heatmap = None
+        # heatmap = cv2.normalize(
+        #     np_img,
+        #     heatmap,
+        #     alpha=0,
+        #     beta=255,
+        #     norm_type=cv2.NORM_MINMAX,
+        #     dtype=cv2.CV_8U)
+        # heatmap = cv2.applyColorMap(heatmap, cv2.COLORMAP_JET)
+        # return heatmap
 
 if __name__ == "__main__":
     settings = Settings()
