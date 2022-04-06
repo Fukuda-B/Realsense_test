@@ -3,6 +3,11 @@
 
     録画: py main.py rec
     再生: py main.py play
+
+    -----
+
+    Realsense D400-Series
+    https://www.mouser.com/pdfdocs/Intel_D400_Series_Datasheet.pdf
 '''
 
 import os
@@ -38,9 +43,13 @@ class Realsense_test():
                 frames = pipeline.wait_for_frames()
                 color_frame = frames.get_color_frame()
                 ir_frame = frames.get_infrared_frame()
-                fps  = frame_no / (time.time() - start)
-                print(fps)
+
+                if frame_no%settings.FPS == 0:
+                    fps  = settings.FPS / (time.time() - start)
+                    start = time.time()
+                    print(f'FPS: {fps}')
                 frame_no += 1
+
                 if not ir_frame or not color_frame:
                     ir_image = np.asanyarray(ir_frame.get_data())
                     color_image = np.asanyarray(color_frame.get_data())
