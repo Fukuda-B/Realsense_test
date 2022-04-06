@@ -3,6 +3,7 @@
 
     録画: py main.py rec
     再生: py main.py play
+  ライブ: py main.py live
 
     -----
 
@@ -27,15 +28,17 @@ class Settings():
         self.FULL_NAME = os.path.join(desktop, self.F_NAME)
 
 class Realsense_test():
-    def rec(settings):
-        config = rs.config()
-        config.enable_stream(rs.stream.infrared, 1, *settings.V_SIZE, rs.format.y8, settings.FPS)
-        config.enable_stream(rs.stream.depth, *settings.V_SIZE, rs.format.z16, settings.FPS)
-        config.enable_stream(rs.stream.color, *settings.V_SIZE, rs.format.bgr8, settings.FPS)
-        config.enable_record_to_file(settings.FULL_NAME)
+    def __init__(self):
+        self.config = rs.config()
+        self.config.enable_stream(rs.stream.infrared, 1, *settings.V_SIZE, rs.format.y8, settings.FPS)
+        self.config.enable_stream(rs.stream.depth, *settings.V_SIZE, rs.format.z16, settings.FPS)
+        self.config.enable_stream(rs.stream.color, *settings.V_SIZE, rs.format.bgr8, settings.FPS)
+
+    def rec(self, settings):
+        self.config.enable_record_to_file(settings.FULL_NAME)
 
         pipeline = rs.pipeline()
-        pipeline.start(config)
+        pipeline.start(self.config)
         start = time.time()
         frame_no = 1
         try:
@@ -58,18 +61,20 @@ class Realsense_test():
         finally:    
             pipeline.stop()
 
-    def play(settings):
-        config = rs.config()
-        config.enable_device_from_file(settings.FULL_NAME)
-        config.enable_stream(rs.stream.color, *settings.V_SIZE, rs.format.bgr8, settings.FPS)
-        config.enable_stream(rs.stream.depth, *settings.V_SIZE, rs.format.z16, settings.FPS)
-        config.enable_stream(rs.stream.infrared, 1, *settings.V_SIZE, rs.format.y8, settings.FPS)
+    def live(self, settings):
+        pipeline = rs.pipeline()
+        self._pw(pipeline)
+
+    def play(self, settings):
+        self.config.enable_device_from_file(settings.FULL_NAME)
 
         pipeline = rs.pipeline()
-        profile = pipeline.start(config)
+        profile = pipeline.start(self.config)
+        self._pw(pipeline)
 
+    def _pw(self, pipeline):
         try:
-            while True:
+            for _ in [None]:
                 frames = pipeline.wait_for_frames()
                 ir_frame = frames.get_infrared_frame()
                 depth_frame = frames.get_depth_frame()
@@ -77,7 +82,7 @@ class Realsense_test():
                 if not depth_frame or not color_frame or not ir_frame:
                     continue
 
-                ir_image = np.asanyarray(ir_frame .get_data())
+                ir_image = np.asanyarray(ir_frame.get_data())
                 depth_image = np.asanyarray(depth_frame.get_data())
                 color_image = np.asanyarray(color_frame.get_data())
 
@@ -97,9 +102,12 @@ if __name__ == "__main__":
     settings = Settings()
     tester = Realsense_test()
     if len(sys.argv) >= 2:
-        if str(sys.argv[1]) == 'rec':
+        opt = str(sys.argv[1])
+        if opt == 'rec':
             tester.rec(settings)
+        elif opt == 'live':
+            tester.live(settings)
         else:
             tester.play(settings)
     else:
-        print(f'----- option -----\nrecode: py main.py rec\nplay  : py main.py play')
+        print(f'----- option -----\nrecode: py main.py rec\nlive  : py main.py live\nplay  : py main.py play')
