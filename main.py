@@ -47,7 +47,7 @@ class Realsense_test():
         start = time.time()
         frame_no = 1
         try:
-            for _ in [None]:
+            while True:
                 frames = pipeline.wait_for_frames()
                 color_frame = frames.get_color_frame()
                 ir_frame = frames.get_infrared_frame()
@@ -80,7 +80,7 @@ class Realsense_test():
     def _pw(self, pipeline):
         ''' フレームの表示 '''
         try:
-            for _ in [None]:
+            while True:
                 frames = pipeline.wait_for_frames()
                 ir_frame = frames.get_infrared_frame()
                 depth_frame = frames.get_depth_frame()
