@@ -25,6 +25,8 @@ import pyrealsense2 as rs
 class Settings():
     def __init__(self):
         self.V_SIZE = (640, 480)        # 画面サイズ
+        # self.V_SIZE = (848, 480)        # 画面サイズ
+        # self.V_SIZE = (1280, 720)
         self.FPS = 30                   # フレームレート
         self.HEATMAP = False            # ヒートマップ表示
         self.F_NAME = 'realsense_b.bag' # ファイル名
@@ -81,14 +83,22 @@ class Realsense_test():
     def _pw(self, pipeline):
         ''' フレームの表示 '''
         try:
+            start = time.time()
+            frame_no = 1
             while True:
                 frames = pipeline.wait_for_frames()
-                # ir_frame = frames.get_infrared_frame()
                 depth_frame = frames.get_depth_frame()
                 color_frame = frames.get_color_frame()
+                # ir_frame = frames.get_infrared_frame()
                 # if not depth_frame or not color_frame or not ir_frame:
                 if not depth_frame or not color_frame:
                     continue
+
+                if frame_no%settings.FPS == 0:
+                    fps  = settings.FPS / (time.time() - start)
+                    start = time.time()
+                    print(f'FPS: {fps}')
+                frame_no += 1
 
                 # ir_image = np.asanyarray(ir_frame.get_data())
                 depth_image = np.asanyarray(depth_frame.get_data())
