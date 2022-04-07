@@ -26,7 +26,7 @@ class Settings():
     def __init__(self):
         self.V_SIZE = (640, 480)        # 画面サイズ
         self.FPS = 30                   # フレームレート
-        self.HEATMAP = True             # ヒートマップ表示
+        self.HEATMAP = False            # ヒートマップ表示
         self.F_NAME = 'realsense_b.bag' # ファイル名
 
         desktop = os.path.expanduser('~/Desktop')
@@ -35,7 +35,7 @@ class Settings():
 class Realsense_test():
     def __init__(self):
         self.config = rs.config()
-        self.config.enable_stream(rs.stream.infrared, 1, *settings.V_SIZE, rs.format.y8, settings.FPS)
+        # self.config.enable_stream(rs.stream.infrared, 1, *settings.V_SIZE, rs.format.y8, settings.FPS)
         self.config.enable_stream(rs.stream.depth, *settings.V_SIZE, rs.format.z16, settings.FPS)
         self.config.enable_stream(rs.stream.color, *settings.V_SIZE, rs.format.bgr8, settings.FPS)
 
@@ -50,7 +50,7 @@ class Realsense_test():
             while True:
                 frames = pipeline.wait_for_frames()
                 color_frame = frames.get_color_frame()
-                ir_frame = frames.get_infrared_frame()
+                # ir_frame = frames.get_infrared_frame()
 
                 if frame_no%settings.FPS == 0:
                     fps  = settings.FPS / (time.time() - start)
@@ -58,9 +58,9 @@ class Realsense_test():
                     print(f'FPS: {fps}')
                 frame_no += 1
 
-                if not ir_frame or not color_frame:
-                    ir_image = np.asanyarray(ir_frame.get_data())
-                    color_image = np.asanyarray(color_frame.get_data())
+                # if not ir_frame or not color_frame:
+                #     ir_image = np.asanyarray(ir_frame.get_data())
+                #     color_image = np.asanyarray(color_frame.get_data())
         except Exception as e:
             print(e)
         finally:    
@@ -68,6 +68,7 @@ class Realsense_test():
 
     def live(self, settings):
         pipeline = rs.pipeline()
+        profile = pipeline.start(self.config)
         self._pw(pipeline)
 
     def play(self, settings):
@@ -82,23 +83,28 @@ class Realsense_test():
         try:
             while True:
                 frames = pipeline.wait_for_frames()
-                ir_frame = frames.get_infrared_frame()
+                # ir_frame = frames.get_infrared_frame()
                 depth_frame = frames.get_depth_frame()
                 color_frame = frames.get_color_frame()
-                if not depth_frame or not color_frame or not ir_frame:
+                # if not depth_frame or not color_frame or not ir_frame:
+                if not depth_frame or not color_frame:
                     continue
 
-                ir_image = np.asanyarray(ir_frame.get_data())
+                # ir_image = np.asanyarray(ir_frame.get_data())
                 depth_image = np.asanyarray(depth_frame.get_data())
                 color_image = np.asanyarray(color_frame.get_data())
+                depth_colormap = cv2.applyColorMap(cv2.convertScaleAbs(depth_image, alpha=0.08), cv2.COLORMAP_JET)
 
-                cv2.namedWindow('ir_image', cv2.WINDOW_AUTOSIZE)
-                cv2.imshow('ir_image', self._heat(ir_image))
+                # cv2.namedWindow('ir_image', cv2.WINDOW_AUTOSIZE)
+                # cv2.imshow('ir_image', self._heat(ir_image))
                 cv2.namedWindow('color_image', cv2.WINDOW_AUTOSIZE)
                 cv2.imshow('color_image', color_image)
                 cv2.namedWindow('depth_image', cv2.WINDOW_AUTOSIZE)
-                cv2.imshow('depth_image', self._heat(depth_image))
-                cv2.waitKey(1)
+                cv2.imshow('depth_image', depth_colormap)
+                # cv2.imshow('depth_image', self._heat(depth_image))
+                if cv2.waitKey(1) &0xff == 27:
+                    cv2.destroyAllWindows()
+                    break
         except Exception as e:
             print(e)
         finally:
@@ -106,7 +112,7 @@ class Realsense_test():
 
     def _heat(self, np_img):
         ''' ヒートマップに変換 '''
-        if not settings.heatmap: return
+        if not settings.HEATMAP: return np_img
         return cv2.applyColorMap(
             cv2.convertScaleAbs(np_img, alpha=0.3),
             cv2.COLORMAP_JET,
