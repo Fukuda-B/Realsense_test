@@ -13,6 +13,7 @@
         https://github.com/IntelRealSense/librealsense/blob/master/wrappers/python/examples/python-tutorial-1-depth.py,
         https://github.com/IntelRealSense/librealsense/blob/master/wrappers/python/examples/opencv_viewer_example.py,
 
+    filtering depth image, https://qiita.com/keoitate/items/efe4212b0074e10378ec#%E5%BE%8C%E5%87%A6%E7%90%86%E3%82%92%E3%81%99%E3%82%8B
 '''
 
 import os
@@ -24,15 +25,33 @@ import pyrealsense2 as rs
 
 class Settings():
     def __init__(self):
+        # ----- 映像設定
         self.V_SIZE = (640, 480)        # 画面サイズ
-        # self.V_SIZE = (848, 480)        # 画面サイズ
-        # self.V_SIZE = (1280, 720)
+        # self.V_SIZE = (848, 480)      # 画面サイズ (USB 3)
+        # self.V_SIZE = (1280, 720)     # 画面サイズ (USB 3)
         self.FPS = 30                   # フレームレート
         self.HEATMAP = False            # ヒートマップ表示
-        self.F_NAME = 'realsense_b.bag' # ファイル名
+        self.NOISE_FILTER = True        # ノイズフィルタ
 
+        # ----- BAGファイル保存ディレクトリ
+        self.F_NAME = 'realsense_b.bag' # ファイル名
         desktop = os.path.expanduser('~/Desktop')
         self.FULL_NAME = os.path.join(desktop, self.F_NAME)
+
+        # ----- 画像での保存
+        self.WRITE_IMG = False          # 保存するか
+        self.WRITE_DIR = '/tmp'         # 保存するディレクトリ
+
+        # ----- フィルタ設定
+        self.decimate = rs.decimation_filter()
+        self.decimate.set_option(rs.option.filter_magnitude, 1)
+        self.spatial = rs.spatial_filter()
+        self.set_option(rs.option.filter_magnitude, 1)
+        self.set_option(rs.option.filter_smooth_alpha, 0.25)
+        self.set_option(rs.option.filter_smooth_delta, 50)
+        self.hole_filling = rs.hole_filling_filter()
+        self.depth_to_disparity = rs.disparity_transform(True)
+        self.disparity_to_depth = rs.disparity_transform(False)
 
 class Realsense_test():
     def __init__(self):
@@ -69,13 +88,14 @@ class Realsense_test():
             pipeline.stop()
 
     def live(self, settings):
+        ''' カメラのデータをリアルタイムで表示 '''
         pipeline = rs.pipeline()
         profile = pipeline.start(self.config)
         self._pw(pipeline)
 
     def play(self, settings):
+        ''' 録画したデータの再生 '''
         self.config.enable_device_from_file(settings.FULL_NAME)
-
         pipeline = rs.pipeline()
         profile = pipeline.start(self.config)
         self._pw(pipeline)
@@ -84,8 +104,9 @@ class Realsense_test():
         ''' フレームの表示 '''
         try:
             start = time.time()
-            frame_no = 1
+            frame_no = 0
             while True:
+                # ----- 画像取得
                 frames = pipeline.wait_for_frames()
                 depth_frame = frames.get_depth_frame()
                 color_frame = frames.get_color_frame()
@@ -93,18 +114,29 @@ class Realsense_test():
                 # if not depth_frame or not color_frame or not ir_frame:
                 if not depth_frame or not color_frame:
                     continue
+                # ir_image = np.asanyarray(ir_frame.get_data())
+                depth_image = np.asanyarray(depth_frame.get_data())
+                color_image = np.asanyarray(color_frame.get_data())
+                depth_colormap = cv2.applyColorMap(cv2.convertScaleAbs(depth_image, alpha=0.08), cv2.COLORMAP_JET)
 
+                # ----- FPS 計算
                 if frame_no%settings.FPS == 0:
                     fps  = settings.FPS / (time.time() - start)
                     start = time.time()
                     print(f'FPS: {fps}')
                 frame_no += 1
 
-                # ir_image = np.asanyarray(ir_frame.get_data())
-                depth_image = np.asanyarray(depth_frame.get_data())
-                color_image = np.asanyarray(color_frame.get_data())
-                depth_colormap = cv2.applyColorMap(cv2.convertScaleAbs(depth_image, alpha=0.08), cv2.COLORMAP_JET)
 
+                # ----- 深度カメラのノイズ除去
+                if settings.NOISE_FILTER:
+                    ff = self.decimate.process(depth_image)
+                    ff = self.depth_to_disparity.process(ff)
+                    ff = self.spatial.process(ff)
+                    ff = self.disparity_to_depth.process(ff)
+                    ff = self.hole_filling.process(ff)
+                    depth_image = ff.as_depth_frame()
+
+                # ----- 表示
                 # cv2.namedWindow('ir_image', cv2.WINDOW_AUTOSIZE)
                 # cv2.imshow('ir_image', self._heat(ir_image))
                 cv2.namedWindow('color_image', cv2.WINDOW_AUTOSIZE)
@@ -112,6 +144,11 @@ class Realsense_test():
                 cv2.namedWindow('depth_image', cv2.WINDOW_AUTOSIZE)
                 cv2.imshow('depth_image', depth_colormap)
                 # cv2.imshow('depth_image', self._heat(depth_image))
+
+                if settings.WRITE_IMG:
+                    cv2.imwrite(settings.WRITE_DIR, f'color_{frame_no}.png', color_image)
+                    cv2.imwrite(settings.WRITE_DIR, f'depth_{frame_no}.png', depth_colormap)
+
                 if cv2.waitKey(1) &0xff == 27:
                     cv2.destroyAllWindows()
                     break
