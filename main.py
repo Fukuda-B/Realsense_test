@@ -7,7 +7,10 @@
 
     -----
 
-    Realsense D400-Series, https://www.mouser.com/pdfdocs/Intel_D400_Series_Datasheet.pdf
+    Realsense D400-Series,
+        https://www.mouser.com/pdfdocs/Intel_D400_Series_Datasheet.pdf,
+        https://store.intelrealsense.com/buy-intel-realsense-depth-camera-d435.html,
+
     librealsense example, 
         https://dev.intelrealsense.com/docs/python2,
         https://github.com/IntelRealSense/librealsense/blob/master/wrappers/python/examples/python-tutorial-1-depth.py,
