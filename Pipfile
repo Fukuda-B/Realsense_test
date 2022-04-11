@@ -1,0 +1,19 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+pyrealsense2 = "*"
+numpy = "*"
+opencv-python = "*"
+
+[scripts]
+rec = "python main.py rec"
+play = "python main.py play"
+live = "python main.py live"
+
+[dev-packages]
+
+[requires]
+python_version = "3.9"
