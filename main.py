@@ -30,10 +30,10 @@ class Settings():
     def __init__(self):
         # ----- 映像設定
         self.V_SIZE_RGB = (640, 480)    # RGB 画面サイズ
-        self.V_SIZE_D = (1280, 720)     # Depth 画面サイズ (USB 3)
+        self.V_SIZE_D = (640, 480)      # Depth 画面サイズ (USB 3)
         self.FPS = 30                   # フレームレート
         self.HEATMAP = False            # ヒートマップ表示
-        self.NOISE_FILTER = False       # ノイズフィルタ
+        self.NOISE_FILTER = True        # ノイズフィルタ
 
         # ----- BAGファイル保存ディレクトリ
         self.F_NAME = 'realsense_b.bag' # ファイル名
@@ -41,7 +41,7 @@ class Settings():
         self.FULL_NAME = os.path.join(desktop, self.F_NAME)
 
         # ----- 画像での保存
-        self.WRITE_IMG = True          # 保存するか
+        self.WRITE_IMG = False         # 保存するか
         self.WRITE_DIR = 'tmp'         # 保存するディレクトリ
 
         # ----- フィルタ設定
@@ -116,10 +116,6 @@ class Realsense_test():
                 # if not depth_frame or not color_frame or not ir_frame:
                 if not depth_frame or not color_frame:
                     continue
-                # ir_image = np.asanyarray(ir_frame.get_data())
-                depth_image = np.asanyarray(depth_frame.get_data())
-                color_image = np.asanyarray(color_frame.get_data())
-                depth_colormap = cv2.applyColorMap(cv2.convertScaleAbs(depth_image, alpha=0.08), cv2.COLORMAP_JET)
 
                 # ----- FPS 計算
                 if frame_no%settings.FPS == 0:
@@ -131,12 +127,20 @@ class Realsense_test():
 
                 # ----- 深度カメラのノイズ除去
                 if settings.NOISE_FILTER:
-                    ff = settings.decimate.process(depth_image)
+                    _depth_image = np.asanyarray(depth_frame.get_data())
+                    _depth_colormap = cv2.applyColorMap(cv2.convertScaleAbs(_depth_image, alpha=0.08), cv2.COLORMAP_JET)
+                    ff = settings.decimate.process(depth_frame)
                     ff = settings.depth_to_disparity.process(ff)
                     ff = settings.spatial.process(ff)
                     ff = settings.disparity_to_depth.process(ff)
                     ff = settings.hole_filling.process(ff)
-                    depth_image = ff.as_depth_frame()
+                    depth_frame = ff.as_depth_frame()
+
+                # ----- カラーマップ適用
+                # ir_image = np.asanyarray(ir_frame.get_data())
+                depth_image = np.asanyarray(depth_frame.get_data())
+                color_image = np.asanyarray(color_frame.get_data())
+                depth_colormap = cv2.applyColorMap(cv2.convertScaleAbs(depth_image, alpha=0.08), cv2.COLORMAP_JET)
 
                 # ----- 表示
                 # cv2.namedWindow('ir_image', cv2.WINDOW_AUTOSIZE)
@@ -144,10 +148,15 @@ class Realsense_test():
                 cv2.namedWindow('color_image', cv2.WINDOW_AUTOSIZE)
                 cv2.imshow('color_image', color_image)
                 cv2.namedWindow('depth_image', cv2.WINDOW_AUTOSIZE)
-                depth_colormap = depth_colormap[120:620, 150:960]
+                # depth_colormap = depth_colormap[120:620, 150:960] # RGBの画像サイズ合わせ
                 cv2.imshow('depth_image', depth_colormap)
                 # cv2.imshow('depth_image', self._heat(depth_image))
 
+                if settings.NOISE_FILTER:
+                    cv2.namedWindow('depth_image (no filter)', cv2.WINDOW_AUTOSIZE)
+                    cv2.imshow('depth_image (no filter)', _depth_colormap)
+
+                # ----- 画像での保存
                 if settings.WRITE_IMG:
                     cv2.imwrite(f'{settings.WRITE_DIR}/color_{frame_no}.png', color_image)
                     cv2.imwrite(f'{settings.WRITE_DIR}/depth_{frame_no}.png', depth_colormap)
