@@ -29,12 +29,11 @@ import pyrealsense2 as rs
 class Settings():
     def __init__(self):
         # ----- 映像設定
-        self.V_SIZE = (640, 480)        # 画面サイズ
-        # self.V_SIZE = (848, 480)      # 画面サイズ (USB 3)
-        # self.V_SIZE = (1280, 720)     # 画面サイズ (USB 3)
+        self.V_SIZE_RGB = (640, 480)    # RGB 画面サイズ
+        self.V_SIZE_D = (1280, 720)     # Depth 画面サイズ (USB 3)
         self.FPS = 30                   # フレームレート
         self.HEATMAP = False            # ヒートマップ表示
-        self.NOISE_FILTER = True        # ノイズフィルタ
+        self.NOISE_FILTER = False       # ノイズフィルタ
 
         # ----- BAGファイル保存ディレクトリ
         self.F_NAME = 'realsense_b.bag' # ファイル名
@@ -42,16 +41,16 @@ class Settings():
         self.FULL_NAME = os.path.join(desktop, self.F_NAME)
 
         # ----- 画像での保存
-        self.WRITE_IMG = False          # 保存するか
-        self.WRITE_DIR = '/tmp'         # 保存するディレクトリ
+        self.WRITE_IMG = True          # 保存するか
+        self.WRITE_DIR = 'tmp'         # 保存するディレクトリ
 
         # ----- フィルタ設定
         self.decimate = rs.decimation_filter()
         self.decimate.set_option(rs.option.filter_magnitude, 1)
         self.spatial = rs.spatial_filter()
-        self.set_option(rs.option.filter_magnitude, 1)
-        self.set_option(rs.option.filter_smooth_alpha, 0.25)
-        self.set_option(rs.option.filter_smooth_delta, 50)
+        self.spatial.set_option(rs.option.filter_magnitude, 1)
+        self.spatial.set_option(rs.option.filter_smooth_alpha, 0.25)
+        self.spatial.set_option(rs.option.filter_smooth_delta, 50)
         self.hole_filling = rs.hole_filling_filter()
         self.depth_to_disparity = rs.disparity_transform(True)
         self.disparity_to_depth = rs.disparity_transform(False)
@@ -60,8 +59,8 @@ class Realsense_test():
     def __init__(self):
         self.config = rs.config()
         # self.config.enable_stream(rs.stream.infrared, 1, *settings.V_SIZE, rs.format.y8, settings.FPS)
-        self.config.enable_stream(rs.stream.depth, *settings.V_SIZE, rs.format.z16, settings.FPS)
-        self.config.enable_stream(rs.stream.color, *settings.V_SIZE, rs.format.bgr8, settings.FPS)
+        self.config.enable_stream(rs.stream.depth, *settings.V_SIZE_D, rs.format.z16, settings.FPS)
+        self.config.enable_stream(rs.stream.color, *settings.V_SIZE_RGB, rs.format.bgr8, settings.FPS)
 
     def rec(self, settings):
         self.config.enable_record_to_file(settings.FULL_NAME)
@@ -132,11 +131,11 @@ class Realsense_test():
 
                 # ----- 深度カメラのノイズ除去
                 if settings.NOISE_FILTER:
-                    ff = self.decimate.process(depth_image)
-                    ff = self.depth_to_disparity.process(ff)
-                    ff = self.spatial.process(ff)
-                    ff = self.disparity_to_depth.process(ff)
-                    ff = self.hole_filling.process(ff)
+                    ff = settings.decimate.process(depth_image)
+                    ff = settings.depth_to_disparity.process(ff)
+                    ff = settings.spatial.process(ff)
+                    ff = settings.disparity_to_depth.process(ff)
+                    ff = settings.hole_filling.process(ff)
                     depth_image = ff.as_depth_frame()
 
                 # ----- 表示
@@ -145,12 +144,13 @@ class Realsense_test():
                 cv2.namedWindow('color_image', cv2.WINDOW_AUTOSIZE)
                 cv2.imshow('color_image', color_image)
                 cv2.namedWindow('depth_image', cv2.WINDOW_AUTOSIZE)
+                depth_colormap = depth_colormap[120:620, 150:960]
                 cv2.imshow('depth_image', depth_colormap)
                 # cv2.imshow('depth_image', self._heat(depth_image))
 
                 if settings.WRITE_IMG:
-                    cv2.imwrite(settings.WRITE_DIR, f'color_{frame_no}.png', color_image)
-                    cv2.imwrite(settings.WRITE_DIR, f'depth_{frame_no}.png', depth_colormap)
+                    cv2.imwrite(f'{settings.WRITE_DIR}/color_{frame_no}.png', color_image)
+                    cv2.imwrite(f'{settings.WRITE_DIR}/depth_{frame_no}.png', depth_colormap)
 
                 if cv2.waitKey(1) &0xff == 27:
                     cv2.destroyAllWindows()
