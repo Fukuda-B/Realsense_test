@@ -69,10 +69,13 @@ class _timer():
 
 # ----- main function
 def main():
+    ex_flag = False
     while True:
         print('--- start program ---')
         tt = _timer()
+        if ex_flag: break
         while True:
+            if ex_flag: break
             if GPIO.input(TACT_GPIO) == GPIO.HIGH:
                 if tt._diff_t():    # hold button
                     for i in range(6):
@@ -80,7 +83,7 @@ def main():
                         time.sleep(0.1)
                     GPIO.cleanup()
                     print('--- stop program ---')
-                    sys.exit()
+                    ex_flag = True
             elif tt.cnt > 0: break  # push button
 
         print('--- start recoding ---')
