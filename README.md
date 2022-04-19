@@ -2,6 +2,11 @@
 realsense test
 
 ## quick start (amd64)
+0. clone this repo
+   ```
+   git clone https://github.com/Fukuda-B/Realsense_test.git
+   cd Realsense
+   ```
 1. create Virtual environment
    ```
    $env:PIPENV_VENV_IN_PROJECT = "true" (for Windows)

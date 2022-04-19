@@ -1,4 +1,0 @@
-matplotlib
-tensorflow
-tensorflow-gpu
-scikit-image
