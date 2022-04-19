@@ -22,7 +22,7 @@ GPIO.output(LED_GPIO, GPIO.LOW)
 # ----- Realsense class
 class _realsense():
     def __init__(self):
-        self.save_dir = '/media/realsense/CA78AC5478AC40D5/Realsense_rec' # save dir
+        self.save_dir = '' # save dir
         self.video_size = (1280, 720) # video size
         self.fps = 30                 # frame rate
         self.config = rs.config()
