@@ -22,7 +22,8 @@ GPIO.output(LED_GPIO, GPIO.LOW)
 # ----- Realsense class
 class _realsense():
     def __init__(self):
-        self.save_dir = '' # save dir
+        self.save_dir_ = '/media/realsense/'
+        self.save_dir = f'{self.save_dir_}{os.listdir(self.save_dir_)[0]}/Realsense_rec' # save dir
         self.video_size = (1280, 720) # video size
         self.fps = 30                 # frame rate
         self.config = rs.config()
@@ -35,10 +36,13 @@ class _realsense():
         dt = datetime.datetime.now()
         filename = '/recorded_' + dt.strftime('%Y%m%d_%H%M%S') + '.bag' # file name
         self.config.enable_record_to_file(self.save_dir+filename)
+        # queue = rs.frame_queue(50, keep_frames=True)
         self.pipeline = rs.pipeline()
         self.pipeline.start(self.config)
+        # self.pipeline.start(self.config, queue)
         self.frame_no = 1
         while True:
+            # frames = queue.wait_for_frames()
             frames = self.pipeline.wait_for_frames()
             color_frame = frames.get_color_frame()
             ir_frame = frames.get_infrared_frame()
@@ -71,9 +75,9 @@ class _timer():
 def main():
     ex_flag = False
     while True:
+        if ex_flag: break
         print('--- start program ---')
         tt = _timer()
-        if ex_flag: break
         while True:
             if ex_flag: break
             if GPIO.input(TACT_GPIO) == GPIO.HIGH:
