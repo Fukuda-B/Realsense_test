@@ -91,8 +91,8 @@ def main():
             elif tt.cnt > 0: break  # push button
 
         print('--- start recoding ---')
-        GPIO.output(LED_GPIO, GPIO.HIGH)
         rs_mod = _realsense()
+        GPIO.output(LED_GPIO, GPIO.HIGH)
         rs_mod.recode()
 
         print('--- stop recoding ---')
