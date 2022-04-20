@@ -79,7 +79,7 @@ def main():
             if GPIO.input(TACT_GPIO) == GPIO.HIGH:
                 if tt._diff_t():    # hold button
                     for i in range(6):
-                        GPIO.output(LED_GPIO, GPIO.LOW if i%2==0 else GPIO.HIGH)
+                        GPIO.output(LED_GPIO, GPIO.HIGH if i%2 else GPIO.LOW)
                         time.sleep(0.1)
                     GPIO.cleanup()
                     print('--- stop program ---')
