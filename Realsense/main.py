@@ -29,8 +29,8 @@ import pyrealsense2 as rs
 class Settings():
     def __init__(self):
         # ----- 映像設定
-        self.V_SIZE_RGB = (640, 480)    # RGB 画面サイズ
-        self.V_SIZE_D = (640, 480)      # Depth 画面サイズ (USB 3)
+        self.V_SIZE_RGB = (1280, 720)    # RGB 画面サイズ
+        self.V_SIZE_D = (1280, 720)      # Depth 画面サイズ (USB 3)
         self.FPS = 30                   # フレームレート
         self.HEATMAP = False            # ヒートマップ表示
         self.NOISE_FILTER = True        # ノイズフィルタ
@@ -63,6 +63,7 @@ class Realsense_test():
         self.config.enable_stream(rs.stream.color, *settings.V_SIZE_RGB, rs.format.bgr8, settings.FPS)
 
     def rec(self, settings):
+        self.mode = 'rec'
         self.config.enable_record_to_file(settings.FULL_NAME)
 
         pipeline = rs.pipeline()
@@ -91,6 +92,7 @@ class Realsense_test():
 
     def live(self, settings):
         ''' カメラのデータをリアルタイムで表示 '''
+        self.mode = 'live'
         pipeline = rs.pipeline()
         self.queue = rs.frame_queue(50, keep_frames=True)
         profile = pipeline.start(self.config, self.queue)
@@ -98,6 +100,7 @@ class Realsense_test():
 
     def play(self, settings):
         ''' 録画したデータの再生 '''
+        self.mode = 'play'
         self.config.enable_device_from_file(settings.FULL_NAME)
         pipeline = rs.pipeline()
         profile = pipeline.start(self.config)
@@ -110,9 +113,15 @@ class Realsense_test():
             frame_no = 0
             while True:
                 # ----- 画像取得
-                frame = self.queue.wait_for_frame()
-                depth_frame = frame.as_frameset().get_depth_frame()
-                color_frame = frame.as_frameset().get_color_frame()
+                if self.mode == 'play':
+                    frames = pipeline.wait_for_frames()
+                    depth_frame = frames.get_depth_frame()
+                    color_frame = frames.get_color_frame()
+                else:
+                    frame = self.queue.wait_for_frame()
+                    depth_frame = frame.as_frameset().get_depth_frame()
+                    color_frame = frame.as_frameset().get_color_frame()
+
                 # ir_frame = frames.get_infrared_frame()
                 # if not depth_frame or not color_frame or not ir_frame:
                 if not depth_frame or not color_frame:
