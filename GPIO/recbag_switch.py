@@ -41,21 +41,24 @@ class _realsense():
         self.pipeline.start(self.config)
         # self.pipeline.start(self.config, queue)
         self.frame_no = 1
-        while True:
-            # frames = queue.wait_for_frames()
-            frames = self.pipeline.wait_for_frames()
-            color_frame = frames.get_color_frame()
-            ir_frame = frames.get_infrared_frame()
-            self.frame_no += 1
-            if not ir_frame or not color_frame:
-                ir_image = np.asanyarray(ir_frame .get_data())
-                color_image = np.asanyarray(color_frame.get_data())
-            if GPIO.input(TACT_GPIO) == GPIO.HIGH:
-                GPIO.output(LED_GPIO, GPIO.LOW)
-                break
-
-    def stop(self):
-        self.pipeline.stop()
+        try:
+            while True:
+                # frames = queue.wait_for_frames()
+                frames = self.pipeline.wait_for_frames()
+                color_frame = frames.get_color_frame()
+                ir_frame = frames.get_infrared_frame()
+                self.frame_no += 1
+                if not ir_frame or not color_frame:
+                    ir_image = np.asanyarray(ir_frame .get_data())
+                    color_image = np.asanyarray(color_frame.get_data())
+                if GPIO.input(TACT_GPIO) == GPIO.HIGH:
+                    GPIO.output(LED_GPIO, GPIO.LOW)
+                    break
+        except Exception as e:
+            print(e)
+        finally:
+            print('--- stop recoding ---')
+            self.pipeline.stop()
 
 # ----- Timer class
 class _timer():
@@ -94,9 +97,6 @@ def main():
         rs_mod = _realsense()
         GPIO.output(LED_GPIO, GPIO.HIGH)
         rs_mod.recode()
-
-        print('--- stop recoding ---')
-        rs_mod.stop()
 
 if __name__ == '__main__':
     main()
