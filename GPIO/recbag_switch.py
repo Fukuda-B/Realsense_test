@@ -36,17 +36,17 @@ class _realsense():
         dt = datetime.datetime.now()
         filename = '/recorded_' + dt.strftime('%Y%m%d_%H%M%S') + '.bag' # file name
         self.config.enable_record_to_file(self.save_dir+filename)
-        # queue = rs.frame_queue(50, keep_frames=True)
+        queue = rs.frame_queue(50, keep_frames=True)
         self.pipeline = rs.pipeline()
-        self.pipeline.start(self.config)
-        # self.pipeline.start(self.config, queue)
+        # self.pipeline.start(self.config)
+        self.pipeline.start(self.config, queue)
         self.frame_no = 1
         try:
             while True:
-                # frames = queue.wait_for_frames()
-                frames = self.pipeline.wait_for_frames()
-                color_frame = frames.get_color_frame()
-                ir_frame = frames.get_infrared_frame()
+                frames = queue.wait_for_frame()
+                # frames = self.pipeline.wait_for_frames()
+                color_frame = frames.as_frameset().get_color_frame()
+                ir_frame = frames.as_frameset().get_infrared_frame()
                 self.frame_no += 1
                 if not ir_frame or not color_frame:
                     ir_image = np.asanyarray(ir_frame .get_data())

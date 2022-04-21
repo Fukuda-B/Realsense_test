@@ -92,7 +92,8 @@ class Realsense_test():
     def live(self, settings):
         ''' カメラのデータをリアルタイムで表示 '''
         pipeline = rs.pipeline()
-        profile = pipeline.start(self.config)
+        self.queue = rs.frame_queue(50, keep_frames=True)
+        profile = pipeline.start(self.config, self.queue)
         self._pw(pipeline)
 
     def play(self, settings):
@@ -109,9 +110,9 @@ class Realsense_test():
             frame_no = 0
             while True:
                 # ----- 画像取得
-                frames = pipeline.wait_for_frames()
-                depth_frame = frames.get_depth_frame()
-                color_frame = frames.get_color_frame()
+                frame = self.queue.wait_for_frame()
+                depth_frame = frame.as_frameset().get_depth_frame()
+                color_frame = frame.as_frameset().get_color_frame()
                 # ir_frame = frames.get_infrared_frame()
                 # if not depth_frame or not color_frame or not ir_frame:
                 if not depth_frame or not color_frame:
