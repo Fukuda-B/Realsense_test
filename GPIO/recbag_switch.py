@@ -79,7 +79,6 @@ class _timer():
 def main():
     ex_flag = False
     while True:
-        if ex_flag: break
         print('--- start program ---')
         tt = _timer()
         while True:
@@ -94,6 +93,7 @@ def main():
                     ex_flag = True
             elif tt.cnt > 0: break  # push button
 
+        if ex_flag: break
         print('--- start recoding ---')
         rs_mod = _realsense()
         GPIO.output(LED_GPIO, GPIO.HIGH)
