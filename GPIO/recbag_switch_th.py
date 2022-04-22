@@ -27,7 +27,6 @@ class _realsense():
         self.save_dir = f'{self.save_dir_}{os.listdir(self.save_dir_)[0]}/Realsense_rec' # save dir
         self.video_size = (1280, 720) # video size
         self.fps = 30                 # frame rate
-        self.queue = True             # keep frame
         self.config = rs.config()
         self.config.enable_stream(rs.stream.infrared, 1, *self.video_size, rs.format.y8, self.fps)
         self.config.enable_stream(rs.stream.depth, *self.video_size, rs.format.z16, self.fps)
@@ -38,7 +37,7 @@ class _realsense():
         dt = datetime.datetime.now()
         filename = '/recorded_' + dt.strftime('%Y%m%d_%H%M%S') + '.bag' # file name
         self.config.enable_record_to_file(self.save_dir+filename)
-        self.queue = rs.frame_queue(50, keep_frames=self.queue)
+        self.queue = rs.frame_queue(50, keep_frames=True)
         self.pipeline = rs.pipeline()
         # self.pipeline.start(self.config)
         self.pipeline.start(self.config, self.queue)
