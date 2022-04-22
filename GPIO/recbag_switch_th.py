@@ -6,6 +6,7 @@ import os
 import sys
 import time
 import datetime
+import threading
 
 LED_GPIO = 4
 TACT_GPIO = 17
@@ -37,29 +38,47 @@ class _realsense():
         dt = datetime.datetime.now()
         filename = '/recorded_' + dt.strftime('%Y%m%d_%H%M%S') + '.bag' # file name
         self.config.enable_record_to_file(self.save_dir+filename)
-        queue = rs.frame_queue(50, keep_frames=self.queue)
+        self.queue = rs.frame_queue(50, keep_frames=self.queue)
         self.pipeline = rs.pipeline()
         # self.pipeline.start(self.config)
-        self.pipeline.start(self.config, queue)
+        self.pipeline.start(self.config, self.queue)
         self.frame_no = 1
         try:
             while True:
-                frames = queue.wait_for_frame()
-                # frames = self.pipeline.wait_for_frames()
-                color_frame = frames.as_frameset().get_color_frame()
-                ir_frame = frames.as_frameset().get_infrared_frame()
+                self._daemon_status = True
+                th = threading.Thread(target=self._get_frame)
+                th.setDaemon(True)
+                th.start()
+
+                while self._daemon_status:
+                    if GPIO.input(TACT_GPIO) == GPIO.HIGH:
+                        GPIO.output(LED_GPIO, GPIO.LOW)
+                        break
+
+                if self._daemon_status: break
+                th.join()
+                color_frame = self.color_frame
+                ir_frame = self.ir_frame
+
                 self.frame_no += 1
                 if not ir_frame or not color_frame:
                     ir_image = np.asanyarray(ir_frame .get_data())
                     color_image = np.asanyarray(color_frame.get_data())
-                if GPIO.input(TACT_GPIO) == GPIO.HIGH:
-                    GPIO.output(LED_GPIO, GPIO.LOW)
-                    break
+
         except Exception as e:
             print(e)
         finally:
             print('--- stop recoding ---')
             self.pipeline.stop()
+
+    def _get_frame(self):
+        frames = self.queue.wait_for_frame()
+        # frames = self.pipeline.wait_for_frames()
+        color_frame = frames.as_frameset().get_color_frame()
+        ir_frame = frames.as_frameset().get_infrared_frame()
+        self.color_frame = color_frame
+        self.ir_frame = ir_frame
+        self._daemon_status = False
 
 # ----- Timer class
 class _timer():
