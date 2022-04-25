@@ -44,6 +44,7 @@ class _realsense():
         # self.pipeline.start(self.config)
         self.pipeline.start(self.config, queue)
         self.frame_no = 1
+        logger.debug(f'filename: {filename}')
         try:
             while True:
                 frames = queue.wait_for_frame()
@@ -81,6 +82,7 @@ class _timer():
 def main():
     ex_flag = False
     while True:
+        GPIO.output(LED_GPIO, GPIO.LOW)
         logger.info('--- start program ---')
         tt = _timer()
         while True:
