@@ -73,7 +73,7 @@ class _timer():
         if not self.b_push: # first exec
             self.b_push = datetime.datetime.now()
             return False
-        return (datetime.datetime.now()-self.b_push).seconds > self.quit_intv
+        return (datetime.datetime.now()-self.b_push).seconds >= self.quit_intv
 
 # ----- main function
 def main():
@@ -92,7 +92,7 @@ def main():
                     print('--- stop program ---')
                     ex_flag = True
                     break
-            elif tt.cnt > 0: break  # push button
+            elif tt.cnt > 0: break  # release button
 
         if ex_flag: break
         print('--- start recoding ---')
