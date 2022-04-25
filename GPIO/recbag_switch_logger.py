@@ -6,8 +6,7 @@ import os
 import sys
 import time
 import datetime
-from logging import getLogger
-logger = getLogger(__name__)
+from logger import *
 
 LED_GPIO = 4
 TACT_GPIO = 17
