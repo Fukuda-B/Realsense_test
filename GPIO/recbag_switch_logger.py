@@ -27,6 +27,7 @@ class _realsense():
         self.save_dir = f'{self.save_dir_}{os.listdir(self.save_dir_)[0]}/Realsense_rec' # save dir
         self.video_size = (1280, 720) # video size
         self.fps = 30                 # frame rate
+        self.video_length = 5         # recode frame (False = inf)
         self.config = rs.config()
         self.config.enable_stream(rs.stream.infrared, 1, *self.video_size, rs.format.y8, self.fps)
         self.config.enable_stream(rs.stream.depth, *self.video_size, rs.format.z16, self.fps)
@@ -58,6 +59,9 @@ class _realsense():
                 if GPIO.input(TACT_GPIO) == GPIO.HIGH:
                     GPIO.output(LED_GPIO, GPIO.LOW)
                     break
+                if self.video_length:
+                    if self.frame_no > self.video_length:
+                        break
         except Exception as e:
             logger.error(e)
         finally:

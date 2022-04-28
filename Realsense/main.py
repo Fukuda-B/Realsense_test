@@ -134,6 +134,11 @@ class Realsense_test():
                     print(f'FPS: {fps}')
                 frame_no += 1
 
+                # print(type(depth_frame))
+                print(f'{depth_frame.get_distance(600,200)}')
+                dd = np.asanyarray(depth_frame.get_data())
+                print(dd[600,200])
+                time.sleep(100)
 
                 # ----- 深度カメラのノイズ除去
                 if settings.NOISE_FILTER:
