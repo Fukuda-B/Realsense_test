@@ -26,7 +26,7 @@ realsense test
 ## raspberry pi 4 (arm Architecture)
 1. raspberry pi imager flash to ubuntu server 20.04 LTS
 2. boot raspberry pi 4
-3. set ntp server (chenge to academic ntp) cf. ntp.akita-pu.ac.jp
+3. set ntp server (chenge to academic ntp)
 4. install GUI
    ```
    sudo apt update && sudo apt upgrade
