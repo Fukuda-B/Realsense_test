@@ -11,18 +11,21 @@ config.enable_stream(rs.stream.depth, 640, 480, rs.format.z16, 30)
 # ストリーミング開始
 pipeline = rs.pipeline()
 profile = pipeline.start(config)
+align_to = rs.stream.color
+align = rs.align(align_to)
 
 try:
     while True:
         # フレーム待ち
         frames = pipeline.wait_for_frames()
+        aligned_frames = align.process(frames)
 
         #RGB
-        RGB_frame = frames.get_color_frame()
+        RGB_frame = aligned_frames.get_color_frame()
         RGB_image = np.asanyarray(RGB_frame.get_data())
 
-        #depyh
-        depth_frame = frames.get_depth_frame()
+        #depth
+        depth_frame = aligned_frames.get_depth_frame()
         depth_image = np.asanyarray(depth_frame.get_data())
         depth_colormap = cv2.applyColorMap(cv2.convertScaleAbs(depth_image, alpha=0.08), cv2.COLORMAP_JET)
 

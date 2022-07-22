@@ -54,6 +54,8 @@ class Settings():
         self.hole_filling = rs.hole_filling_filter()
         self.depth_to_disparity = rs.disparity_transform(True)
         self.disparity_to_depth = rs.disparity_transform(False)
+        align_to = rs.stream.color
+        self.align = rs.align(align_to)
 
 class Realsense_test():
     def __init__(self):
@@ -115,8 +117,9 @@ class Realsense_test():
                 # ----- 画像取得
                 if self.mode == 'play':
                     frames = pipeline.wait_for_frames()
-                    depth_frame = frames.get_depth_frame()
-                    color_frame = frames.get_color_frame()
+                    aligned_frames = self.align.process(frames) # 画角補正
+                    depth_frame = aligned_frames.get_depth_frame()
+                    color_frame = aligned_frames.get_color_frame()
                 else:
                     frame = self.queue.wait_for_frame()
                     depth_frame = frame.as_frameset().get_depth_frame()
